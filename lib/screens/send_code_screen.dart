@@ -1,6 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:second_project/welcome_screen_modified.dart';
+import 'package:second_project/screens/welcome_screen_modified.dart';
 import 'package:flutter/services.dart';
 
 class VerifyAccountScreen extends StatefulWidget {

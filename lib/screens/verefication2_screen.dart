@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:second_project/welcome_screen_modified.dart';
-import 'package:second_project/worker_verification_screen.dart'; 
+import 'package:second_project/screens/welcome_screen_modified.dart';
+import 'package:second_project/screens/worker_verification_screen.dart'; 
 class Verification2Screen extends StatefulWidget {
   const Verification2Screen({super.key});
   @override

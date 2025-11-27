@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 //import 'package:second_project/color.dart';
-import 'package:second_project/color_screen.dart';
-import 'package:second_project/create_account_screen.dart';
+import 'package:second_project/screens/color_screen.dart';
+import 'package:second_project/screens/create_account_screen.dart';
 //import 'package:second_project/fix.dart';
-import 'package:second_project/login_screen.dart';
-import 'package:second_project/send_code_screen.dart';
-import 'package:second_project/verefication2_screen.dart';
+import 'package:second_project/screens/login_screen.dart';
+import 'package:second_project/screens/send_code_screen.dart';
+import 'package:second_project/screens/verefication2_screen.dart';
 //import 'package:second_project/verification1_screen.dart';
-import 'package:second_project/welcome_screen_modified.dart';
-import 'package:second_project/welcome_screen_modified.dart';
+import 'package:second_project/screens/welcome_screen_modified.dart';
+import 'package:second_project/screens/welcome_screen_modified.dart';
 
 void main() {
   runApp(const MyApp());

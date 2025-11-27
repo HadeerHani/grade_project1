@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:second_project/create_account_screen.dart';
-import 'package:second_project/login_screen.dart';
+import 'package:second_project/screens/create_account_screen.dart';
+import 'package:second_project/screens/login_screen.dart';
 
 class AppColors {
   static const Color primaryDarkGreen = Color(0xFF385E48);
