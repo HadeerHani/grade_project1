@@ -1,16 +1,28 @@
+import 'dart:ffi' as ffi;
+
 import 'package:flutter/material.dart';
 import 'package:second_project/screens/login_screen.dart';
+import 'package:second_project/screens/send_code_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 
+//import 'package:second_project/screens/create_account_screen.dart';
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
 
   @override
-  State<CreateAccountScreen> createState() => _CreateAccountScreen();
+  State<CreateAccountScreen> createState() => _CreateAccountScreenState();
 }
 
-class _CreateAccountScreen extends State<CreateAccountScreen> {
+class _CreateAccountScreenState extends State<CreateAccountScreen> {
+  //final TextEditingController _otpController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   String? _selectedRole;
+  @override
+  void dispose() {
+    emailController.dispose();
+    super.dispose();
+  }
+
   Widget buildRoleButton(String text, String role) {
     bool isSelected = _selectedRole == role;
     IconData iconData;
@@ -32,9 +44,16 @@ class _CreateAccountScreen extends State<CreateAccountScreen> {
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: isSelected
-              ? AppColors.primaryDarkGreen// const Color(0xFF5E8B7E)
-              : const Color.fromARGB(255, 218, 208, 178),// const Color(0xFFF1EACD),
-          foregroundColor: isSelected ? AppColors.backgroundWhite : AppColors.primaryDarkGreen,
+              ? AppColors.primaryDarkGreen // const Color(0xFF5E8B7E)
+              : const Color.fromARGB(
+                  255,
+                  218,
+                  208,
+                  178,
+                ), // const Color(0xFFF1EACD),
+          foregroundColor: isSelected
+              ? AppColors.backgroundWhite
+              : AppColors.primaryDarkGreen,
           padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30.0),
@@ -111,124 +130,161 @@ class _CreateAccountScreen extends State<CreateAccountScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-    Row(
-  children: <Widget>[
-    buildRoleButton('Worker', 'Worker'),
-    const SizedBox(width: 15),
-    buildRoleButton('Customer', 'Customer'),
-  ],
-),
+              Row(
+                children: <Widget>[
+                  buildRoleButton('Worker', 'Worker'),
+                  const SizedBox(width: 15),
+                  buildRoleButton('Customer', 'Customer'),
+                ],
+              ),
 
-if (_selectedRole != 'Worker')
-  Padding(
-    padding: const EdgeInsets.only(top: 25.0),
-    child: ElevatedButton(
-      onPressed: () {
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Color.fromARGB(255, 218, 208, 178),
-        foregroundColor: AppColors.primaryDarkGreen,
-        minimumSize: const Size(double.infinity, 50),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30.0),
-        ),
-      ),
-      child: const Text('Continue', style: TextStyle(fontSize: 18,color: AppColors.primaryDarkGreen)),
-    ),
-  ),
-
-// المنطقة الشرطية (تظهر فقط عند اختيار 'Worker')
-if (_selectedRole == 'Worker') ...[
-  
-  const SizedBox(height: 20),
-  TextFormField(
-    keyboardType: TextInputType.number,
-    maxLength: 9, 
-    decoration: const InputDecoration(
-      labelText: 'Social Security Number (Required for Worker)',
-      hintText: '9-digit SSN (e.g., 123456789)',
-      counterText: '',
-    ),
-  ),
-  const SizedBox(height: 20),
-  ElevatedButton.icon(
-    icon: const Icon(Icons.photo_camera_outlined),
-    label: const Text('Upload Profile Photo (Optional)'),
-    onPressed: () {
-      
-    },
-    style: ElevatedButton.styleFrom(
-      minimumSize: const Size(double.infinity, 50),
-      backgroundColor: AppColors.secondaryLightBeige,
-      foregroundColor: AppColors.primaryDarkGreen,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15.0),
-      ),
-    ),
-  ),
-  const SizedBox(height: 20),
-  // 
-  TextFormField(
-    maxLines: 3,
-    decoration: const InputDecoration(
-      labelText: 'Short Bio (Optional)',
-      hintText: 'e.g., Plumber with 10 years experience',
-    ),
-  ),
-  
-  const SizedBox(height: 25),
-  ElevatedButton(
-    onPressed: () {
-    },
-    style: ElevatedButton.styleFrom(
-      backgroundColor:const Color.fromARGB(255, 218, 208, 178),
-      foregroundColor: AppColors.primaryDarkGreen,
-      minimumSize: const Size(double.infinity, 50),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(30.0),
-      ),
-    ),
-    child: const Text('Continue', style: TextStyle(fontSize: 18,color: AppColors.primaryDarkGreen)),
-  ),
-  const SizedBox(height: 15),
-],
-
-// زر تسجيل الدخول (يظهر عندما لا يكون Worker هو المختار)
-if (_selectedRole != 'Worker')
-  Center(
-   child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    "Already have an account?",
-                    style: TextStyle(
-                      color: Color.fromRGBO(56, 94, 72, 1),
-                      fontSize: 19,
-                    ),
-                  ),
-                  TextButton(
+              if (_selectedRole == 'Customer')
+                Padding(
+                  padding: const EdgeInsets.only(top: 25.0),
+                  child: ElevatedButton(
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) {
-                            return LoginScreen();
+                            return VerifyAccountScreen(
+                              email: emailController.text,
+                             // rolee: 'Customer',
+                              selectedRole: 'Customer',
+                            );
                           },
                         ),
                       );
                     },
-                  
-                 child: const Text('log in', style: TextStyle(fontSize: 19, )),),
-                ],
-              ),
-   /* child: TextButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color.fromARGB(255, 218, 208, 178),
+                      foregroundColor: AppColors.primaryDarkGreen,
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
+                    ),
+                    child: const Text(
+                      'Continue',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: AppColors.primaryDarkGreen,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // المنطقة الشرطية (تظهر فقط عند اختيار 'Worker')
+              if (_selectedRole == 'Worker') ...[
+                const SizedBox(height: 20),
+                TextFormField(
+                  keyboardType: TextInputType.number,
+                  maxLength: 9,
+                  decoration: const InputDecoration(
+                    labelText: 'Social Security Number (Required for Worker)',
+                    hintText: '9-digit SSN (e.g., 123456789)',
+                    counterText: '',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.photo_camera_outlined),
+                  label: const Text('Upload Profile Photo (Optional)'),
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                    backgroundColor: Colors.white70,
+                    foregroundColor: AppColors.primaryDarkGreen,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15.0),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                //
+                TextFormField(
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Short Bio (Optional)',
+                    hintText: 'e.g., Plumber with 10 years experience',
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) {
+                          return VerifyAccountScreen(
+                            email: emailController.text,
+                           // rolee: 'Worker',
+                            selectedRole: 'Worker',
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 218, 208, 178),
+                    foregroundColor: AppColors.primaryDarkGreen,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                    ),
+                  ),
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: AppColors.primaryDarkGreen,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 15),
+              ],
+
+              // زر تسجيل الدخول (يظهر عندما لا يكون Worker هو المختار)
+              if (_selectedRole != 'Worker')
+                Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Already have an account?",
+                        style: TextStyle(
+                          color: Color.fromRGBO(56, 94, 72, 1),
+                          fontSize: 19,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) {
+                                return LoginScreen();
+                              },
+                            ),
+                          );
+                        },
+
+                        child: const Text(
+                          'log in',
+                          style: TextStyle(fontSize: 19),
+                        ),
+                      ),
+                    ],
+                  ),
+                  /* child: TextButton(
       onPressed: () {
     //
       },
       child: const Text("Already have an account? Log in",style: TextStyle(fontSize: 18,color: AppColors.primaryDarkGreen),),
     ),*/
-  ),
-   ],
+                ),
+            ],
           ),
         ),
       ),

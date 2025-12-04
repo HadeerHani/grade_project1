@@ -10,7 +10,7 @@ class AppColors {
   static const Color button = Color.fromARGB(255, 218, 208, 178);
   static const Color redDotBorder = Color(0xFFD32F2F);
   static const Color lightRedBackground = Color(0xFFFAE5E5);
-  
+  static const Color textgrey = Color.fromRGBO(117, 117, 117, 1);
 }
 
 class WelcomeScreenModified extends StatelessWidget {
@@ -62,10 +62,10 @@ class WelcomeScreenModified extends StatelessWidget {
               color: AppColors.primaryDarkGreen,
               size: 35,
             ),
-            SizedBox(width: 5),
-            // SizedBox(height: 100,),
+           SizedBox(width: 5),
+           // SizedBox(height: 200,),
             Text(
-              'FixPay',
+              'FIXPAY',
               style: TextStyle(
                 fontSize: 60,
                 fontWeight: FontWeight.bold,
@@ -105,6 +105,7 @@ class WelcomeScreenModified extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
+            style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
             onPressed: () {
               Navigator.push(
                 context,
@@ -115,20 +116,8 @@ class WelcomeScreenModified extends StatelessWidget {
                 ),
               );
             },
-
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryDarkGreen,
-              foregroundColor: AppColors.secondaryLightBeige,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            child: const Text('Sign In'),
+            child: const Text('Sign In',style: TextStyle(fontSize: 18,
+                fontWeight: FontWeight.bold,),),
           ),
         ),
 
@@ -137,7 +126,8 @@ class WelcomeScreenModified extends StatelessWidget {
         // زر Create an Account (البيج الفاتح)
         SizedBox(
           width: double.infinity,
-          child: OutlinedButton(
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
             onPressed: () {
               Navigator.push(
                 context,
@@ -148,23 +138,8 @@ class WelcomeScreenModified extends StatelessWidget {
                 ),
               );
             },
-            style: OutlinedButton.styleFrom(
-              backgroundColor: AppColors.primaryDarkGreen,
-              foregroundColor: AppColors.secondaryLightBeige,
-              side: const BorderSide(
-                color: AppColors.secondaryLightBeige,
-                width: 2,
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            child: const Text('Create an Account'),
+           child: const Text('Create an Account',style: TextStyle(fontSize: 18,
+                fontWeight: FontWeight.bold,),),
           ),
         ),
 
@@ -182,8 +157,6 @@ class WelcomeScreenModified extends StatelessWidget {
       ],
     );
   }
-
-  // بناء الأيقونات الخفيفة في الخلفية
   Widget _buildBackgroundIcons() {
     return Positioned.fill(
       child: Opacity(

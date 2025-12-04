@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:second_project/screens/create_account_screen.dart';
+import 'package:second_project/screens/forgot_password.dart';
+import 'package:second_project/screens/home_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -55,35 +57,50 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    /* Navigator.push(
+                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) {
-                          return LoginScreen();
+                          return HomeScreen();
                         },
                       ),
                     );
-                 */
+                 
                   },
 
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryDarkGreen,
-                    foregroundColor: AppColors.secondaryLightBeige,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
+                    //backgroundColor: AppColors.primaryDarkGreen,
+                    //foregroundColor: AppColors.secondaryLightBeige,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    /*  shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
                     textStyle: const TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.bold,
-                    ),
+                    ),*/
                   ),
-                  child: const Text('Log In'),
+                  child: const Text(
+                    'Log In',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
               const SizedBox(height: 30),
               TextButton(
-                onPressed: () {},
+                style: TextButton.styleFrom(
+                  splashFactory: NoSplash.splashFactory,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return ForgotPassword();
+                      },
+                    ),
+                  );
+                },
                 child: Center(
                   child: const Text(
                     'Forgot password?',
@@ -92,16 +109,83 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               SizedBox(height: 22),
-              Center(
-                child: Text(
-                  'or continue with',
-                  style: TextStyle(
-                    color: Color.fromARGB(255, 97, 97, 97),
-                    fontSize: 19,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Divider(
+                      color: Colors.grey,
+                      thickness: 1,
+                      indent: 20,
+                      endIndent: 10,
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      'or continue with',
+                      style: TextStyle(
+                        color: Color.fromARGB(255, 97, 97, 97),
+                        fontSize: 19,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Divider(
+                      color: Colors.grey,
+                      thickness: 1,
+                      indent: 20,
+                      endIndent: 10,
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 25),
+
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 30.0),
+                // padding: const EdgeInsets.symmetric(horizontal: 80,),
+                child: Center(
+                  //width: 280,
+                  //ConstrainedBox(constraints: const BoxConstraints(maxHeight: 50),
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      // 
+                      print('Signing in with Google...');
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(
+                        color: AppColors.primaryDarkGreen,
+                        width: 2.0,
+                      ),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 35.0,
+                        vertical: 10.0,
+                      ),
+                      minimumSize: Size.zero,
+                      // padding: const EdgeInsets.symmetric(horizontal: 90),
+                      backgroundColor: Colors.white70, 
+                      foregroundColor: AppColors.primaryDarkGreen,
+                      elevation: 1, 
+                    ),
+                    /* icon: Image.network(
+               'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
+               height: 24.0,
+                   ),*/
+                    label: const Text(
+                      'Google',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
               ),
-              SizedBox(height: 17),
+
+              SizedBox(height: 25),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -124,8 +208,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       );
                     },
-                  
-                 child: const Text('Sign up', style: TextStyle(fontSize: 19)),),
+
+                    child: const Text(
+                      'Sign up',
+                      style: TextStyle(fontSize: 19),
+                    ),
+                  ),
                 ],
               ),
             ],
