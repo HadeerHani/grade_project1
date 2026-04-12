@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // لفتح الكاميرا والمعرض
-import 'package:http/http.dart' as http; // لتحميل الملفات إلى الخادم
-import 'dart:io'; // للتعامل مع الملفات
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:io';
 import 'package:second_project/screens/welcome_screen_modified.dart';
+import 'package:second_project/core/api_constants.dart';
 
 class WorkerVerificationScreen extends StatefulWidget {
   const WorkerVerificationScreen({super.key});
@@ -15,72 +16,99 @@ class WorkerVerificationScreen extends StatefulWidget {
 class _WorkerVerificationScreenState extends State<WorkerVerificationScreen> {
   bool isIdUploaded = false;
   bool isSelfieCaptured = false;
+  bool isLoading = false;
 
-  // 💡 تعريف الـ ImagePicker
+  XFile? _idFile;
+  XFile? _selfieFile;
+
   final ImagePicker _picker = ImagePicker();
 
-  // 💡 عنوان API الخادم (يجب عليكِ تغييره للرابط الفعلي)
-  final String uploadUrl = 'YOUR_UPLOAD_API_URL';
+  final String uploadUrl = ApiConstants.verifyIdentity;
   void _uploadId() async {
-    final XFile? file = await _picker.pickImage(source: ImageSource.gallery);
-
-    if (file != null) {
-      // 1. إنشاء طلب التحميل (Multipart Request)
-      var request = http.MultipartRequest('POST', Uri.parse(uploadUrl));
-
-      // 2. إضافة الملف
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'document_file', // اسم حقل الملف في الـ API
-          file.path,
-        ),
+    try {
+      final XFile? file = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 50,
       );
-
-      try {
-        var response = await request.send();
-
-        // 3. التحقق من استجابة الخادم
-        if (response.statusCode == 200) {
-          // 4. نجاح التحميل: تحديث الحالة
-          setState(() {
-            isIdUploaded = true;
-          });
-          print("ID uploaded successfully!");
-        } else {
-          // فشل التحميل
-          print("ID upload failed with status: ${response.statusCode}");
-        }
-      } catch (e) {
-        print("An error occurred during ID upload: $e");
+      if (file != null) {
+        setState(() {
+          _idFile = file;
+          isIdUploaded = true;
+        });
+        debugPrint("ID Selected: ${file.path}");
       }
+    } catch (e) {
+      debugPrint("Error picking ID: $e");
     }
   }
+
   void _takeSelfie() async {
-    final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
-
-    if (photo != null) {
-      var request = http.MultipartRequest('POST', Uri.parse(uploadUrl));
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'selfie_file', // اسم حقل الملف في الـ API
-          photo.path,
-        ),
+    try {
+      final XFile? photo = await _picker.pickImage(
+        source: ImageSource.camera,
+        preferredCameraDevice:
+            CameraDevice.front,
+        imageQuality: 50,
       );
-      try {
-        var response = await request.send();
-        if (response.statusCode == 200) {
-          setState(() {
-            isSelfieCaptured = true;
-          });
-          print("Selfie uploaded successfully!");
-        } else {
-          print("Selfie upload failed with status: ${response.statusCode}");
-        }
-      } catch (e) {
-        print("An error occurred during selfie upload: $e");
+      if (photo != null) {
+        setState(() {
+          _selfieFile = photo;
+          isSelfieCaptured = true;
+        });
+        debugPrint("Selfie Captured: ${photo.path}");
       }
+    } catch (e) {
+      debugPrint("Error taking selfie: $e");
     }
   }
+
+  void _submitVerification() async {
+    if (_idFile == null || _selfieFile == null) return;
+
+    setState(() => isLoading = true);
+
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse(uploadUrl));
+
+     
+      
+      request.files.add(
+        await http.MultipartFile.fromPath('id_image', _idFile!.path),
+      );
+
+      request.files.add(
+        await http.MultipartFile.fromPath('live_image', _selfieFile!.path),
+      );
+
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Verification sent successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Upload failed: ${response.statusCode}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
   Widget _buildVerificationTile({
     required int stepNumber,
     required String title,
@@ -90,13 +118,6 @@ class _WorkerVerificationScreenState extends State<WorkerVerificationScreen> {
     required bool isDone,
     required VoidCallback onPressed,
   }) {
-    Color statusColor = AppColors.primaryDarkGreen;
-    String statusText = isDone
-        ? (stepNumber == 1
-              ? 'Document Uploaded successfully.'
-              : 'Selfie Captured successfully.')
-        : buttonText;
-
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(15),
@@ -124,22 +145,24 @@ class _WorkerVerificationScreenState extends State<WorkerVerificationScreen> {
             ),
           ),
           const SizedBox(height: 5),
-
           Text(
             description,
             style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
           const SizedBox(height: 15),
-
           isDone
               ? Row(
                   children: [
-                    Icon(Icons.check_circle, color: statusColor, size: 18),
+                    Icon(
+                      Icons.check_circle,
+                      color: AppColors.primaryDarkGreen,
+                      size: 18,
+                    ),
                     const SizedBox(width: 8),
                     Text(
-                      statusText,
+                      stepNumber == 1 ? 'ID Selected' : 'Selfie Captured',
                       style: TextStyle(
-                        color: statusColor,
+                        color: AppColors.primaryDarkGreen,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -150,9 +173,8 @@ class _WorkerVerificationScreenState extends State<WorkerVerificationScreen> {
                   icon: Icon(icon, color: AppColors.primaryDarkGreen, size: 20),
                   label: Text(buttonText),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.button, 
+                    backgroundColor: AppColors.button,
                     foregroundColor: AppColors.primaryDarkGreen,
-                    elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -162,26 +184,24 @@ class _WorkerVerificationScreenState extends State<WorkerVerificationScreen> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final bool isVerificationComplete = isIdUploaded && isSelfieCaptured;
     return Scaffold(
       backgroundColor: AppColors.secondaryLightBeige,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         title: const Text('Worker Verification'),
         backgroundColor: AppColors.primaryDarkGreen,
         foregroundColor: AppColors.backgroundWhite,
-        elevation: 0,
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Complete your profile to accept jobs',
+              'Verify your identity with AI',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -192,53 +212,51 @@ class _WorkerVerificationScreenState extends State<WorkerVerificationScreen> {
             _buildVerificationTile(
               stepNumber: 1,
               title: 'Upload ID',
-              description:
-                  "Upload a government-issued ID (e.g., Driver's License or Passport).",
-              buttonText: 'Upload ID',
+              description: "Upload a government-issued ID.",
+              buttonText: 'Gallery',
               icon: Icons.upload_file,
               isDone: isIdUploaded,
-              onPressed: _uploadId, 
+              onPressed: _uploadId,
             ),
             _buildVerificationTile(
               stepNumber: 2,
               title: 'Take a Selfie',
-              description:
-                  'Take a clear photo of yourself for verification purposes.',
-              buttonText: 'Open Camera',
+              description: 'Take a clear photo for face matching.',
+              buttonText: 'Camera',
               icon: Icons.camera_alt_outlined,
               isDone: isSelfieCaptured,
-              onPressed:
-                  _takeSelfie, 
+              onPressed: _takeSelfie,
             ),
-            const SizedBox(height:20),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: isVerificationComplete
-                    ? () {
-                        
-                      }
+                onPressed: (isVerificationComplete && !isLoading)
+                    ? _submitVerification
                     : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryDarkGreen,
                   foregroundColor: AppColors.secondaryLightBeige,
                   disabledBackgroundColor: AppColors.button,
-                  //foregroundColor: finalButtonTextColor,
-                  disabledForegroundColor: AppColors.primaryDarkGreen,
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
                 ),
-                child: Text(
-                  isVerificationComplete
-                      ? 'Complete Verification'
-                      : 'Missing Documents',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        isVerificationComplete
+                            ? 'Submit for AI Verification'
+                            : 'Complete Steps First',
+                      ),
               ),
             ),
           ],
