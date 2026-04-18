@@ -75,9 +75,7 @@ class _VerifyAccountScreen extends State<VerifyAccountScreen> {
                 height: 55,
                 child: ElevatedButton(
                   onPressed: () {
-                    //if(otpController.text.isNotEmpty){
                     if (widget.selectedRole =='password_reset') //{
-                     // if(widget.selectedRole=='Worker')
                       {
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(

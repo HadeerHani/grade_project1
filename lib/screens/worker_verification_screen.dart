@@ -18,8 +18,7 @@ class _WorkerVerificationScreenState extends State<WorkerVerificationScreen> {
 
   // 💡 تعريف الـ ImagePicker
   final ImagePicker _picker = ImagePicker();
-
-  // 💡 عنوان API الخادم (يجب عليكِ تغييره للرابط الفعلي)
+  // 💡 عنوان API 
   final String uploadUrl = 'YOUR_UPLOAD_API_URL';
   void _uploadId() async {
     final XFile? file = await _picker.pickImage(source: ImageSource.gallery);

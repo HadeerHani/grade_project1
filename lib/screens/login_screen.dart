@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:second_project/screens/create_account_screen.dart';
 import 'package:second_project/screens/forgot_password.dart';
 import 'package:second_project/screens/home_screen.dart';
+import 'package:second_project/screens/send_code_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,6 +13,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,7 +63,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) {
-                          return HomeScreen();
+                          return VerifyAccountScreen (email: _emailController.text,
+                          selectedRole: 'Customer',);
                         },
                       ),
                     );

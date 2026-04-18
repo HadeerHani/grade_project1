@@ -193,7 +193,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50),
-                    backgroundColor: Colors.white70,
+                    backgroundColor:AppColors.button,
                     foregroundColor: AppColors.primaryDarkGreen,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15.0),

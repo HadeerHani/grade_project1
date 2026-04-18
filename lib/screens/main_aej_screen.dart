@@ -18,7 +18,7 @@ class _MainScreenState extends State<MainScreen> {
   static final List<Widget> _widgetOptions = <Widget>[
     const JobsScreen(),
     const EarningsScreen(),
-    const AccountScreen(),
+    const WorkerProfilePage()
   ];
 
   void _onItemTapped(int index) {

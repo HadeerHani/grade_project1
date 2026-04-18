@@ -1,176 +1,396 @@
-// lib/screens/account_screen.dart
-
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:second_project/screens/login_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
-import 'jobs_screen.dart'; // لاستخدام AppCard
+import 'user_provider.dart'; // تأكدي من مسار ملف البروفايدر عندك
 
-class AccountScreen extends StatelessWidget {
-  const AccountScreen({super.key});
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-      return AppBar(
-        automaticallyImplyLeading: false,
-      title: Text(
-        'FIXPAY',
-        style: TextStyle(
-          fontWeight: FontWeight.w900,
-          letterSpacing: 1.5,
-          color: AppColors.backgroundWhite,
-        ),
-      ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.calendar_today_outlined),
-          onPressed: () {},
-        ),
-        IconButton(
-          icon: const Icon(Icons.notifications_none),
-          onPressed: () {},
-        ),
-      ],
-      );
+class WorkerProfilePage extends StatefulWidget {
+  const WorkerProfilePage({super.key});
+
+  @override
+  State<WorkerProfilePage> createState() => _WorkerProfilePageState();
+}
+
+class _WorkerProfilePageState extends State<WorkerProfilePage> {
+  bool isEditing = false; // لمتابعة حالة التعديل
+
+  late TextEditingController _nameController;
+  late TextEditingController _ssnController;
+  late TextEditingController _bioController;
+  late TextEditingController _emailController;
+  late TextEditingController _phoneController;
+  late TextEditingController _addressController;
+
+  @override
+  void initState() {
+    super.initState();
+    // جلب البيانات الحالية من الـ Provider
+    final wp = Provider.of<UserProvider>(context, listen: false);
+    _nameController = TextEditingController(text: wp.workerName);
+    _ssnController = TextEditingController(text: wp.workerSSN);
+    _bioController = TextEditingController(text: wp.workerBio);
+    _emailController = TextEditingController(text: wp.workerEmail);
+    _phoneController = TextEditingController(text: wp.workerPhone);
+    _addressController = TextEditingController(text: wp.workerAddress);
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50,
+    );
+    if (image != null && mounted) {
+      // استخدام الدالة الشاملة الجديدة في الـ Provider
+      Provider.of<UserProvider>(
+        context,
+        listen: false,
+      ).updateWorkerData(image: File(image.path));
     }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.secondaryLightBeige,
-      appBar: _buildAppBar(context),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'My Account',
-              style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryDarkGreen),
-            ),
-            const SizedBox(height: 20),
-            _buildProfileHeader(),
-            const SizedBox(height: 20),
-            _buildPersonalInformation(),
-            const SizedBox(height: 20),
-            _buildWorkerStatus(),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.redDotBorder, 
-                foregroundColor: AppColors.secondaryLightBeige,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+    const Color primaryDarkGreen = Color(0xFF385E48);
+    const cardBackground = Color(0xFFF2EFE9);
+    const Color greyLabel = Color(0xFFA59D8B);
+    const Color logout = const Color(0xFFC62828);
+
+    return Consumer<UserProvider>(
+      builder: (context, wp, child) {
+        return Scaffold(
+          backgroundColor: AppColors.backgroundWhite,
+          appBar: AppBar(
+            title: const Text("My Account"),
+            actions: [
+              IconButton(
+                // تغيير الأيقونة بناءً على حالة التعديل
+                icon: Icon(
+                  isEditing ? Icons.check : Icons.edit,
+                  color: AppColors.backgroundWhite,
+                ),
+                onPressed: () {
+                  if (isEditing) {
+                    // حفظ البيانات الجديدة في الـ Provider
+                    wp.updateWorkerData(
+                      name: _nameController.text,
+                      ssn: _ssnController.text,
+                      bio: _bioController.text,
+                      email: _emailController.text,
+                      phone: _phoneController.text,
+                      address: _addressController.text,
+                    );
+                  }
+                  setState(() => isEditing = !isEditing);
+                },
               ),
-              child: const Text('Log Out', style: TextStyle(fontSize: 16)),
+            ],
+          ),
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                // جزء الصورة والاسم العلوي
+                   _buildHeader(wp, primaryDarkGreen, cardBackground,),
+
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      // كارت المعلومات الشخصية
+                      SizedBox(width: double.infinity,
+                        child: _buildInfoCard(cardBackground, greyLabel)),
+                      const SizedBox(height: 16),
+                      // كارت الـ Worker Status والـ Specialties
+                      _buildStatusCard(cardBackground, greyLabel),
+                      const SizedBox(height: 24),
+                      // زر الـ Logout
+                      _buildLogoutButton(logout),
+                      const SizedBox(height: 30),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
-  
-  Widget _buildProfileHeader() {
+
+  Widget _buildHeader(
+    UserProvider wp,
+    Color primaryDarkGreen,
+    Color cardBackground,
+    //Color offWhiteText,
+  ) {
     return Column(
       children: [
-        CircleAvatar(
-          radius: 40,
-          backgroundColor: AppColors.primaryDarkGreen,
-          child: const Text('SN',
-              style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryDarkGreen)),
+        Stack(
+          alignment: Alignment.bottomRight,
+          children: [
+            CircleAvatar(
+              radius: 65,
+              backgroundColor: cardBackground,
+              backgroundImage: wp.workerImage != null
+                  ? FileImage(wp.workerImage!)
+                  : null,
+              child: wp.workerImage == null
+                  ? Text(
+                      wp.workerName.isNotEmpty
+                          ? wp.workerName[0].toUpperCase()
+                          : "W",
+                      style: const TextStyle(
+                        fontSize: 55,
+                        color: AppColors.primaryDarkGreen,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
+            ),
+            if (isEditing)
+              GestureDetector(
+                onTap: _pickImage,
+                child: const CircleAvatar(
+                  radius: 20,
+                  backgroundColor: const Color(0xFFF2EFE9),
+                  child: Icon(
+                    Icons.camera_alt,
+                    size: 20,
+                    color: AppColors.primaryDarkGreen,
+                  ),
+                ),
+              ),
+          ],
         ),
-        const SizedBox(height: 8),
-        const Text('Spencer N.',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold,color: AppColors.primaryDarkGreen)),
-        const Text('Verified Professional',
-            style: TextStyle(fontSize: 14, color: AppColors.textgrey)),
+        const SizedBox(height: 15),
+        Text(
+          wp.workerName,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primaryDarkGreen,
+          ),
+        ),
+        const Text(
+          "Professional Worker",
+          style: TextStyle(color: Colors.grey, letterSpacing: 1),
+        ),
+        const SizedBox(height: 20),
       ],
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Text(
-        title,
-        style: const TextStyle(
-            fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primaryDarkGreen),
+  Widget _buildInfoCard(Color cardBackground, Color greyLabel) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cardBackground, // اللون الجديد للكارد `0xFFE2EFE9`
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryDarkGreen.withOpacity(0.02),
+            blurRadius: 10,
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildInformationRow(String label, String value, {bool isSecret = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 80,
-            child: Text('$label:',
-                style: const TextStyle(fontSize: 14, color:AppColors.primaryDarkGreen)),
-          ),
-          Expanded(
-            child: Text(
-              isSecret ? '--*5678' : value,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          const Text(
+            "Personal Information",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: AppColors.primaryDarkGreen,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPersonalInformation() {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Personal Information'),
-          _buildInformationRow('NAME', 'Spencer N.'),
-          _buildInformationRow('EMAIL', 'spencer.n@email.com'),
-          _buildInformationRow('PHONE', '+1 (555) 123-4567'),
-          _buildInformationRow('ADDRESS', '123 Worker Lane, City, State'),
-          _buildInformationRow('SSN', '--*5678', isSecret: true),
-          const SizedBox(height: 10),
-          _buildSectionTitle('BIO'),
+          //const Divider(height: 30, color: AppColors.primaryDarkGreen),
+          // العرض عادي أو تعديل (يظهر Text أو TextField مدور)
+          _infoRow("NAME", _nameController, "Spencer N.", greyLabel),
+          _infoRow("SSN", _ssnController, "14 digits number", greyLabel),
+          _infoRow("EMAIL", _emailController, "mail@example.com", greyLabel),
+          _infoRow("PHONE", _phoneController, "01xxxxxxxxx", greyLabel),
+          _infoRow("ADDRESS", _addressController, "City, Street", greyLabel),
+          const SizedBox(height: 15),
           const Text(
-              'Certified Electrician with 5+ years of expertise in home wiring and electrical.',
-              style: TextStyle(fontSize: 14,color:  const Color.fromRGBO(117, 117, 117, 1))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWorkerStatus() {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Worker Status'),
-          Row(
-            children: [
-              const Icon(Icons.check_circle, color: AppColors.primaryDarkGreen, size: 20),
-              const SizedBox(width: 8),
-              const Text('Verification: Verified',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600,color: AppColors.primaryDarkGreen)),
-            ],
+            "BIO",
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
           ),
           const SizedBox(height: 8),
+          isEditing
+              ? TextField(
+                  controller: _bioController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    hintText: "Tell us about your work experience...",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                )
+              : Text(
+                  Provider.of<UserProvider>(context, listen: false).workerBio,
+                  style: const TextStyle(fontSize: 15, height: 1.4),
+                ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoRow(
+    String label,
+    TextEditingController controller,
+    String hint,
+    Color greyLabel,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+              color: greyLabel,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 6),
+          isEditing
+              ? TextField(
+                  controller: controller,
+                  style: const TextStyle(fontSize: 16),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor:
+                        Colors.white, // خلفية الـ Field بيضاء مدورة زي الصورة
+                    hintText: hint,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 15,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      borderSide: BorderSide(color: Colors.grey[200]!.withOpacity(0.1)),
+                    ),
+                   /* focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      borderSide: const BorderSide(color: Color(0xFF132F2B)),
+                    ),*/
+                  ),
+                )
+              // العرض عادي (Text) لما ميكونش تعديل
+              : Text(
+                  controller.text,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusCard(Color cardBackground, Color greyLabel) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cardBackground, // اللون الجديد للكارد `0xFFE2EFE9`
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.verified, color: AppColors.primaryDarkGreen, size: 28),
+              SizedBox(width: 12),
+              Text(
+                "Status: ",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              Text(
+                "Verified",
+                style: TextStyle(
+                  color: AppColors.primaryDarkGreen,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 40 ,color:AppColors.primaryDarkGreen),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Specialties: (3)', style: TextStyle(fontSize: 14,color:  const Color.fromRGBO(117, 117, 117, 1))),
+              const Text(
+                "Specialties (3)",
+                style: TextStyle(
+                  color: AppColors.primaryDarkGreen,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               TextButton(
-                  onPressed: () {},
-                  child: const Text('Update Services',
-                      style: TextStyle(color: const Color.fromRGBO(117, 117, 117, 1)))),
+                onPressed: () {},
+                child: const Text(
+                  "Update Services",
+                  style: TextStyle(
+                    color:AppColors.textgrey,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton(Color mainGreen) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () {
+          Provider.of<UserProvider>(context, listen: false).logout();
+          Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(builder: (context) => const LoginScreen()), 
+    (route) => false,
+  );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor:const Color(0xFFC62828), 
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+        ),
+        child: const Text(
+          "Log Out",
+          style: TextStyle(
+            color:AppColors.backgroundWhite,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
       ),
     );
   }

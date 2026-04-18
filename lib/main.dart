@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:second_project/screens/account_screen.dart';
+//import 'package:second_project/screens/account_screen.dart';
 //import 'package:second_project/color.dart';
 import 'package:second_project/screens/color_screen.dart';
 import 'package:second_project/screens/create_account_screen.dart';
 import 'package:second_project/screens/forgot_password.dart';
+import 'package:second_project/screens/home_screen.dart';
 import 'package:second_project/screens/jobs_screen.dart';
 //import 'package:second_project/fix.dart';
 import 'package:second_project/screens/login_screen.dart';
 import 'package:second_project/screens/main_aej_screen.dart';
 import 'package:second_project/screens/select_services.dart';
 import 'package:second_project/screens/send_code_screen.dart';
+import 'package:second_project/screens/user_provider.dart';
 import 'package:second_project/screens/verefication2_screen.dart';
 //import 'package:second_project/verification1_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
@@ -16,7 +21,15 @@ import 'package:second_project/screens/welcome_screen_modified.dart';
 import 'package:second_project/screens/worker_verification_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(providers: [
+      ChangeNotifierProvider(create: (_)=>UserProvider())
+    ],
+      child:const MyApp()
+    )
+    //const MyApp()
+    
+    );
 }
 
 class MyApp extends StatelessWidget {
@@ -27,6 +40,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+     // initialRoute: '/home',
+     // routes: {
+     //   '/home':(context)=>const HomeScreen()
+
+     // },
       builder: (context, child) {
         ErrorWidget.builder = (FlutterErrorDetails details) {
           return Container();
@@ -39,7 +57,7 @@ class MyApp extends StatelessWidget {
           toolbarHeight: 80.0,
           titleTextStyle: TextStyle(
             color: AppColors.secondaryLightBeige,
-            fontSize: 33,
+            fontSize: 32,
             fontWeight: FontWeight.bold,
           ),
           backgroundColor: AppColors.primaryDarkGreen,
