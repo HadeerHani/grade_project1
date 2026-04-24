@@ -5,7 +5,7 @@ import 'package:second_project/screens/home_repairpage.dart';
 import 'package:second_project/screens/moving_page.dart';
 import 'package:second_project/screens/other_services_page.dart';
 import 'package:second_project/screens/personal_page.dart';
-import 'package:second_project/screens/profile_screen.dart';
+import 'package:second_project/screens/task_details_screen.dart';
 import 'package:second_project/screens/services_list_screen.dart';
 import 'package:second_project/screens/user_provider.dart';
 import 'package:second_project/screens/vehicle_servicespage.dart';
@@ -50,7 +50,7 @@ class HomeScreen extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 16.0),
                   child: CircleAvatar(
                     radius: 18,
-                    backgroundColor: Colors.grey[300],
+                    backgroundColor: AppColors.backgroundWhite,
                     // 💡 هنا بنشيك: لو فيه صورة في الـ Provider اعرضيها، لو مفيش اعرضي الأيقونة
                     backgroundImage: userProvider.userImage != null
                         ? FileImage(userProvider.userImage!)

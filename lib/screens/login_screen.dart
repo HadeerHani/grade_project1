@@ -217,10 +217,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         foregroundColor: AppColors.primaryDarkGreen,
                         elevation: 1, 
                       ),
-                      /* icon: Image.network(
-               'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
-               height: 24.0,
-                   ),*/
+                      
+                       icon: Image.asset('lib/assets/images/google.png' ,height: 20,),
                       label: const Text(
                         'Google',
                         style: TextStyle(

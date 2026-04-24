@@ -25,7 +25,7 @@ class _MainScreenState extends State<MainScreen> {
     _widgetOptions = [
       JobsScreen(selectedSkills: widget.selectedSkills),
       const EarningsScreen(),
-      const WorkerProfilePage(),
+       WorkerProfilePage(selectedSkills: widget.selectedSkills),
     ];
   }
 
@@ -38,13 +38,15 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.backgroundWhite,
+      ///Colors.white,
       // 3. بنعرض الصفحة بناءً على الاختيار
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: AppColors.backgroundWhite,
+ backgroundColor: const Color(0xFFF2EFE9),
+        //backgroundColor:  AppColors.backgroundWhite,
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         selectedItemColor: AppColors.primaryDarkGreen,

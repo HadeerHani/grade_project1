@@ -22,13 +22,12 @@ import 'package:second_project/screens/verefication2_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 import 'package:second_project/screens/worker_verification_screen.dart';
+import 'package:second_project/screens/task_details_screen.dart';
 
 void main() {
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => UserProvider()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => UserProvider())],
       child: const MyApp(),
     ),
   );
@@ -42,11 +41,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-     // initialRoute: '/home',
-     // routes: {
-     //   '/home':(context)=>const HomeScreen()
+      // initialRoute: '/home',
+      // routes: {
+      //   '/home':(context)=>const HomeScreen()
 
-     // },
+      // },
       builder: (context, child) {
         ErrorWidget.builder = (FlutterErrorDetails details) {
           return Container();
@@ -123,7 +122,16 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home:SelectServicesScreen(),
+      home: 
+      /* TaskDetailsScreen(
+  title: 'Outdoor Circuit Breaker',
+  price: 250,
+  specialty: 'Electrician',
+  details: 'Need a dedicated 20A circuit run to the new shed.',*/
+//),
+     // home:TaskDetailsScreen()
+      // LoginScreen(),
+      WorkerProfilePage( selectedSkills: ['Plumber,Electerician'],),
       // MainScreen(selectedSkills: ['Electerician']),
     );
   }

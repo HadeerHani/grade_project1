@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:second_project/screens/login_screen.dart';
+import 'package:second_project/screens/select_services.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 import 'user_provider.dart'; // تأكدي من مسار ملف البروفايدر عندك
 
 class WorkerProfilePage extends StatefulWidget {
-  const WorkerProfilePage({super.key});
+  final List<String> selectedSkills;
+  const WorkerProfilePage({super.key, required this.selectedSkills});
 
   @override
   State<WorkerProfilePage> createState() => _WorkerProfilePageState();
@@ -342,27 +344,34 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
           ),
           const Divider(height: 40, color: AppColors.primaryDarkGreen),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Specialties (3)",
-                style: TextStyle(
-                  color: AppColors.primaryDarkGreen,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: const Text(
-                  "Update Services",
-                  style: TextStyle(
-                    color: AppColors.textgrey,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ),
-            ],
-          ),
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    // 1. عرض كلمة التخصصات مع العدد الحقيقي
+    Text(
+      "Specialties (${widget.selectedSkills.length})", // هيقرأ عدد المهارات اللي في الشنطة
+      style: TextStyle(
+        color: AppColors.primaryDarkGreen,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+    TextButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SelectServicesScreen(isUpdating: true,)),
+        );
+      },
+      child: const Text(
+        "Update Services",
+        style: TextStyle(
+          color: AppColors.textgrey,
+          decoration: TextDecoration.underline,
+        ),
+      ),
+    ),
+  ],
+),
+
         ],
       ),
     );
