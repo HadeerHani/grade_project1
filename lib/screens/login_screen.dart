@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:second_project/screens/create_account_screen.dart';
 import 'package:second_project/screens/forgot_password.dart';
-import 'package:second_project/screens/send_code_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 import 'package:second_project/screens/user_provider.dart';
 import 'package:second_project/screens/home_screen.dart';
