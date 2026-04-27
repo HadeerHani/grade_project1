@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:second_project/core/auth_service.dart';
 import 'package:second_project/screens/password_reset_succcess_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 
 class NewPasswordScreen extends StatefulWidget {
-  const NewPasswordScreen({super.key});
+  final String email;
+  final String otp;
+  const NewPasswordScreen({super.key, required this.email, required this.otp});
 
   @override
   State<NewPasswordScreen> createState() => _NewPasswordScreenState();
@@ -99,18 +102,27 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
               ),
               const SizedBox(height: 30),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     final password = _passwordController.text;
-                    print('كلمة المرور الجديدة: $password');
                     
-                    bool resetSuccess = true;
-                    if (resetSuccess) {
+                    final result = await AuthService.resetPassword(widget.email, widget.otp, password);
+                    
+                    if (!context.mounted) return;
+                    
+                    if (result['success']) {
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(
                           builder: (context) => const PasswordResetSuccessScreen(),
                         ),
                         (Route<dynamic> route) => false,
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(result['message'] ?? 'Failed to reset password'),
+                          backgroundColor: Colors.red,
+                        ),
                       );
                     }
                   }

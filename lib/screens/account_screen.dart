@@ -58,7 +58,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
     const Color primaryDarkGreen = Color(0xFF385E48);
     const cardBackground = Color(0xFFF2EFE9);
     const Color greyLabel = Color(0xFFA59D8B);
-    const Color logout = const Color(0xFFC62828);
+    const Color logout = Color(0xFFC62828);
 
     return Consumer<UserProvider>(
       builder: (context, wp, child) {
@@ -73,10 +73,10 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                   isEditing ? Icons.check : Icons.edit,
                   color: AppColors.backgroundWhite,
                 ),
-                onPressed: () {
+                onPressed: () async {
                   if (isEditing) {
                     // حفظ البيانات الجديدة في الـ Provider
-                    wp.updateWorkerData(
+                    bool success = await wp.updateWorkerData(
                       name: _nameController.text,
                       ssn: _ssnController.text,
                       bio: _bioController.text,
@@ -84,8 +84,19 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                       phone: _phoneController.text,
                       address: _addressController.text,
                     );
+                    
+                    if (success) {
+                      setState(() => isEditing = false);
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Failed to update profile')),
+                        );
+                      }
+                    }
+                  } else {
+                    setState(() => isEditing = true);
                   }
-                  setState(() => isEditing = !isEditing);
                 },
               ),
             ],
@@ -159,7 +170,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                 onTap: _pickImage,
                 child: const CircleAvatar(
                   radius: 20,
-                  backgroundColor: const Color(0xFFF2EFE9),
+                  backgroundColor: Color(0xFFF2EFE9),
                   child: Icon(
                     Icons.camera_alt,
                     size: 20,

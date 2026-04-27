@@ -1,18 +1,9 @@
-import 'package:second_project/screens/active_request_page.dart';
-import 'package:second_project/screens/cleaning_page.dart';
 import 'package:second_project/screens/custom_bottom_nav.dart';
-import 'package:second_project/screens/home_repairpage.dart';
-import 'package:second_project/screens/moving_page.dart';
-import 'package:second_project/screens/other_services_page.dart';
-import 'package:second_project/screens/personal_page.dart';
-import 'package:second_project/screens/task_details_screen.dart';
 import 'package:second_project/screens/services_list_screen.dart';
 import 'package:second_project/screens/user_provider.dart';
-import 'package:second_project/screens/vehicle_servicespage.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 
 import 'package:flutter/material.dart';
-import 'user_provider.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatelessWidget {

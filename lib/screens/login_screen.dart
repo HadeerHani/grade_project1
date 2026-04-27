@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:second_project/screens/create_account_screen.dart';
 import 'package:second_project/screens/forgot_password.dart';
-import 'package:second_project/screens/home_screen.dart';
 import 'package:second_project/screens/send_code_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
+import 'package:second_project/screens/user_provider.dart';
+import 'package:second_project/screens/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -103,18 +105,31 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                             return VerifyAccountScreen (email: _emailController.text,
-                          selectedRole: 'Customer',);
-                        },
-                            
-                          ),
-                        );
+                        final provider = Provider.of<UserProvider>(context, listen: false);
+                        
+                        // Show loading indicator inside the button or as dialog (for now just wait)
+                        bool success = await provider.login(_emailController.text, _passwordController.text);
+                        
+                        if (!context.mounted) return;
+                        
+                        if (success) {
+                          // Navigate to HomeScreen
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (context) => const HomeScreen()),
+                            (route) => false,
+                          );
+                        } else {
+                          // Show error message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Login failed. Please check your credentials.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(

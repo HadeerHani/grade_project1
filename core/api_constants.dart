@@ -13,7 +13,7 @@ class ApiConstants {
   // ==========================================
   // اللينك الأساسي اللي الأبلكيشن كله هيقرا منه
   // (غير الكلمة دي بس حسب إنت بتجرب فين دلوقتي)
-  static const String baseUrl = emulatorBaseUrl;
+  static const String baseUrl = physicalDeviceBaseUrl;
   // ==========================================
 
   // الراوتس (Endpoints) الخاصة باليوزر

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; // مكتبة اختيار الصور
 import 'dart:io'; // للتعامل مع الملفات
+import 'package:provider/provider.dart';
+import 'package:second_project/screens/user_provider.dart';
 import 'package:second_project/screens/login_screen.dart';
 import 'package:second_project/screens/send_code_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
@@ -177,6 +179,19 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       : null,
                 ),
                 const SizedBox(height: 20),
+                TextFormField(
+                  controller: ssnController,
+                  keyboardType: TextInputType.number,
+                  maxLength: 14,
+                  decoration: const InputDecoration(
+                    labelText: 'Social Security Number (14 digits)',
+                    counterText: '',
+                    prefixIcon: Icon(Icons.badge_outlined),
+                  ),
+                  validator: (value) =>
+                      (value!.length != 14) ? 'SSN must be 14 digits' : null,
+                ),
+                const SizedBox(height: 20),
                 const Text(
                   'I am a :',
                   style: TextStyle(
@@ -196,18 +211,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
                 // عرض الحقول الإضافية في حال اختيار Worker
                 if (_selectedRole == 'Worker') ...[
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: ssnController,
-                    keyboardType: TextInputType.number,
-                    maxLength: 9,
-                    decoration: const InputDecoration(
-                      labelText: 'Social Security Number',
-                      counterText: '',
-                    ),
-                    validator: (value) =>
-                        (value!.length != 9) ? 'SSN must be 9 digits' : null,
-                  ),
                   const SizedBox(height: 20),
 
                   // 3. تعديل زرار رفع الصورة ليظهر حالة الرفع أو المعاينة
@@ -262,7 +265,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 const SizedBox(height: 25),
                 // زر الاستمرار
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_selectedRole == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Please select a role')),
@@ -270,15 +273,56 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       return;
                     }
                     if (_formKey.currentState!.validate()) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => VerifyAccountScreen(
-                            email: emailController.text,
-                            selectedRole: _selectedRole!,
+                      final provider = Provider.of<UserProvider>(context, listen: false);
+                      
+                      // Split name into first and last for the backend
+                      List<String> nameParts = fullNameController.text.trim().split(' ');
+                      String firstName = nameParts.isNotEmpty ? nameParts[0] : '';
+                      String lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : 'User';
+
+                      // Prepare data according to backend registerSchema
+                      Map<String, dynamic> userData = {
+                        'name': {
+                          'first': firstName,
+                          'last': lastName,
+                        },
+                        'userName': '${firstName.toLowerCase()}_${DateTime.now().millisecondsSinceEpoch % 10000}',
+                        'email': emailController.text.trim(),
+                        'phoneNumber': phoneController.text.trim(),
+                        'password': passwordController.text,
+                        'confirmPassword': confirmPasswordController.text,
+                        'dateOfBirth': '01-01-2000', // Placeholder - backend requires DD-MM-YYYY
+                        'gender': false, // Placeholder - false for male
+                        'role': _selectedRole == 'Worker' ? 'worker' : 'user',
+                        'ssn': ssnController.text.trim(),
+                      };
+
+                      if (_selectedRole == 'Worker') {
+                        // Optional bio or category can be added here if needed
+                      }
+                      
+                      bool success = await provider.register(userData);
+                      
+                      if (!context.mounted) return;
+                      
+                      if (success) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => VerifyAccountScreen(
+                              email: emailController.text,
+                              selectedRole: _selectedRole!,
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Registration failed. Please check your data or try again.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(

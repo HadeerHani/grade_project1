@@ -6,7 +6,7 @@ class ColorScreen extends  StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF),
+      backgroundColor: Color(0x000000ff),
       appBar: AppBar(
         backgroundColor: Color(0xFFFCF8F2)
       ),

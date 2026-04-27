@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:second_project/core/auth_service.dart';
 import 'package:second_project/screens/send_code_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 
@@ -72,24 +73,36 @@ class _ForgotPassword extends State<ForgotPassword> {
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       final String userEmail = _emailController.text;
-                      final String roleFprPasswordRest = 'password_reset';
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) {
-                            return VerifyAccountScreen(
-                              email: userEmail,
-                              selectedRole: roleFprPasswordRest,
-                              //rolee: 'password_reset',
-                              //correctotp: 'your',
-                            );
-                          },
-                        ),
-                      );
-                      print('Send Code button pressed...');
+                      
+                      // Show a loading indicator ideally, just waiting for now
+                      final result = await AuthService.forgotPassword(userEmail);
+                      
+                      if (!context.mounted) return;
+                      
+                      if (result['success']) {
+                        final String roleFprPasswordRest = 'password_reset';
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return VerifyAccountScreen(
+                                email: userEmail,
+                                selectedRole: roleFprPasswordRest,
+                              );
+                            },
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(result['message'] ?? 'Failed to send code'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     }
                   },
                   child: const Text(

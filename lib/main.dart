@@ -1,28 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:second_project/screens/account_screen.dart';
 //import 'package:second_project/screens/account_screen.dart';
 //import 'package:second_project/screens/account_screen.dart';
 //import 'package:second_project/color.dart';
-import 'package:second_project/screens/color_screen.dart';
-import 'package:second_project/screens/create_account_screen.dart';
-import 'package:second_project/screens/earnings_screen.dart';
-import 'package:second_project/screens/forgot_password.dart';
-import 'package:second_project/screens/home_screen.dart';
-import 'package:second_project/screens/jobs_screen.dart';
 //import 'package:second_project/fix.dart';
 import 'package:second_project/screens/login_screen.dart';
-import 'package:second_project/screens/main_aej_screen.dart';
-import 'package:second_project/screens/personal_page.dart';
-import 'package:second_project/screens/select_services.dart';
-import 'package:second_project/screens/send_code_screen.dart';
 import 'package:second_project/screens/user_provider.dart';
-import 'package:second_project/screens/verefication2_screen.dart';
 //import 'package:second_project/verification1_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
-import 'package:second_project/screens/welcome_screen_modified.dart';
-import 'package:second_project/screens/worker_verification_screen.dart';
-import 'package:second_project/screens/task_details_screen.dart';
 
 void main() {
   runApp(
@@ -80,10 +65,10 @@ class MyApp extends StatelessWidget {
               TextButton.styleFrom(
                 foregroundColor: AppColors.primaryDarkGreen,
               ).copyWith(
-                overlayColor: MaterialStateProperty.resolveWith<Color?>((
-                  Set<MaterialState> states,
+                overlayColor: WidgetStateProperty.resolveWith<Color?>((
+                  Set<WidgetState> states,
                 ) {
-                  if (states.contains(MaterialState.pressed)) {
+                  if (states.contains(WidgetState.pressed)) {
                     return AppColors.primaryDarkGreen.withOpacity(0.2);
                   }
                   return null;
@@ -122,16 +107,16 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: 
-      /* TaskDetailsScreen(
+      home:
+          /* TaskDetailsScreen(
   title: 'Outdoor Circuit Breaker',
   price: 250,
   specialty: 'Electrician',
   details: 'Need a dedicated 20A circuit run to the new shed.',*/
-//),
-     // home:TaskDetailsScreen()
-      // LoginScreen(),
-      WorkerProfilePage( selectedSkills: ['Plumber,Electerician'],),
+          //),
+          // home:TaskDetailsScreen()
+          LoginScreen(),
+      // WorkerProfilePage( selectedSkills: ['Plumber,Electerician'],),
       // MainScreen(selectedSkills: ['Electerician']),
     );
   }

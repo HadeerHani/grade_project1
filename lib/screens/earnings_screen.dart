@@ -112,7 +112,7 @@ class EarningsScreen extends StatelessWidget {
                         fontSize: 16, fontWeight: FontWeight.w600,color: AppColors.primaryDarkGreen),
                   ),
                   Text('Customer: $customer',
-                      style: const TextStyle(fontSize: 14, color: const Color.fromRGBO(117, 117, 117, 1))),
+                      style: const TextStyle(fontSize: 14, color: Color.fromRGBO(117, 117, 117, 1))),
                   const SizedBox(height: 4),
                   Row(
                     children: [

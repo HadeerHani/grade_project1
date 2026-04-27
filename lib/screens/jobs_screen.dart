@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:second_project/screens/custom_bottom_nav.dart';
 import 'package:second_project/screens/task_details_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 import 'account_screen.dart';
@@ -295,7 +294,7 @@ class JobsScreen extends StatelessWidget {
           // 2. اللوب اللي بيعرض التقييمات والتواريخ
           ...allRatings
               .map((r) => _buildRatingItem(r['rating']!, r['date']!))
-              .toList(),
+              ,
         ],
       ),
     );

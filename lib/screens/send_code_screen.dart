@@ -1,11 +1,10 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:second_project/core/auth_service.dart';
 import 'package:second_project/screens/home_screen.dart';
 import 'package:second_project/screens/new_password_screen.dart';
 import 'package:second_project/screens/select_services.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 import 'package:flutter/services.dart';
-//import 'package:second_project/screens/create_account_screen.dart';
 
 class VerifyAccountScreen extends StatefulWidget {
   final String? selectedRole;
@@ -90,7 +89,7 @@ class _VerifyAccountScreen extends State<VerifyAccountScreen> {
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (!_isOTPComplete()) {
                         setState(() {
                           _showError = true;
@@ -104,27 +103,44 @@ class _VerifyAccountScreen extends State<VerifyAccountScreen> {
                         return;
                       }
 
+                      final otp = _getOTP();
+
                       if (widget.selectedRole == 'password_reset') {
                         Navigator.of(context).pushAndRemoveUntil(
                           MaterialPageRoute(
-                            builder: (context) =>  NewPasswordScreen(),
+                            builder: (context) => NewPasswordScreen(email: widget.email, otp: otp),
                           ),
                           (Route<dynamic> route) => false,
                         );
-                      } else if (widget.selectedRole == 'Worker') {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (context) => const SelectServicesScreen(),
-                          ),
-                          (Route<dynamic> route) => false,
-                        );
-                      } else if (widget.selectedRole == 'Customer') {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (context) => const HomeScreen(),
-                          ),
-                          (Route<dynamic> route) => false,
-                        );
+                      } else {
+                        // Registration OTP confirmation
+                        final result = await AuthService.confirmEmail(widget.email, otp);
+                        if (!context.mounted) return;
+                        
+                        if (result['success']) {
+                          if (widget.selectedRole == 'Worker') {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (context) => const SelectServicesScreen(),
+                              ),
+                              (Route<dynamic> route) => false,
+                            );
+                          } else { // Customer
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (context) => const HomeScreen(),
+                              ),
+                              (Route<dynamic> route) => false,
+                            );
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(result['message'] ?? 'Invalid OTP'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       }
                     },
                     child: const Text(

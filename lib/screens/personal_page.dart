@@ -21,6 +21,7 @@ class _PersonalPageState extends State<PersonalPage> {
   late TextEditingController nameController;
   late TextEditingController emailController;
   late TextEditingController phoneController;
+  late TextEditingController ssnController;
   late TextEditingController addressController;
   late TextEditingController bioController;
 
@@ -32,6 +33,7 @@ class _PersonalPageState extends State<PersonalPage> {
     nameController = TextEditingController(text: up.userName); 
     emailController = TextEditingController(text: up.userEmail);
     phoneController = TextEditingController(text: up.userPhone);
+    ssnController = TextEditingController(text: up.userSSN);
     addressController = TextEditingController(text: up.userAddress);
     bioController = TextEditingController(text: up.userBio);
   }
@@ -54,19 +56,29 @@ class _PersonalPageState extends State<PersonalPage> {
     }
   }
 
-  void _saveChanges() {
+  void _saveChanges() async {
     // تفعيل الفاليديشن قبل الحفظ
     if (_formKey.currentState!.validate()) {
-      Provider.of<UserProvider>(context, listen: false).updateUserData(
+      bool success = await Provider.of<UserProvider>(context, listen: false).updateUserData(
         name: nameController.text,
         email: emailController.text, 
         phone: phoneController.text,
+        ssn: ssnController.text,
         address: addressController.text,
         bio: bioController.text,
       );
-      setState(() {
-        isEditing = false;
-      });
+      
+      if (!mounted) return;
+      
+      if (success) {
+        setState(() {
+          isEditing = false;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update profile')),
+        );
+      }
     }
   }
 
@@ -162,6 +174,12 @@ class _PersonalPageState extends State<PersonalPage> {
                       phoneController, 
                       isEditing,
                       validator: (val) => val!.isEmpty ? 'Phone cannot be empty' : null,
+                    ),
+                    _buildField(
+                      "SSN", 
+                      ssnController, 
+                      isEditing,
+                      validator: (val) => val!.length != 14 ? 'SSN must be 14 digits' : null,
                     ),
                     _buildField(
                       "ADDRESS", 

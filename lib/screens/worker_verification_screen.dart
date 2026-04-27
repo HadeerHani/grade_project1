@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:second_project/screens/main_aej_screen.dart';
-import 'dart:io';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 import 'package:second_project/core/api_constants.dart';
 

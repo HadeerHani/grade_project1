@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:second_project/screens/custom_bottom_nav.dart';
-import 'package:second_project/screens/main_aej_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart'; // تأكدي من مسار الألوان
 
 class TaskDetailsScreen extends StatefulWidget {

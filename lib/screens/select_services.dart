@@ -221,7 +221,7 @@ class _SelectServicesScreenState extends State<SelectServicesScreen> {
             ),
             ..._serviceCategories.entries.map((entry) {
               return _buildServiceCategory(entry.key, entry.value);
-            }).toList(),
+            }),
 
             const SizedBox(height: 20),
             _buildSelectedSkillsSummary(),
