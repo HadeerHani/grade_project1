@@ -5,6 +5,10 @@ import 'package:second_project/screens/forgot_password.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 import 'package:second_project/screens/user_provider.dart';
 import 'package:second_project/screens/home_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:second_project/core/api_constants.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -106,25 +110,58 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: ElevatedButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        final provider = Provider.of<UserProvider>(context, listen: false);
-                        
-                        // Show loading indicator inside the button or as dialog (for now just wait)
-                        bool success = await provider.login(_emailController.text, _passwordController.text);
-                        
-                        if (!context.mounted) return;
-                        
-                        if (success) {
-                          // Navigate to HomeScreen
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (context) => const HomeScreen()),
-                            (route) => false,
+                        try {
+                          final response = await http.post(
+                            Uri.parse(ApiConstants.login),
+                            headers: {'Content-Type': 'application/json'},
+                            body: jsonEncode({
+                              'email': _emailController.text.trim(),
+                              'password': _passwordController.text,
+                            }),
                           );
-                        } else {
-                          // Show error message
+
+                          final responseData = jsonDecode(response.body);
+
+                          if (response.statusCode == 200 || response.statusCode == 201) {
+                            final String? token = responseData['token'];
+                            if (token != null) {
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setString('jwt_token', token);
+                              
+                              // Also save user ID if present for profile loading
+                              if (responseData['data'] is Map && responseData['data']['_id'] != null) {
+                                await prefs.setString('user_id', responseData['data']['_id']);
+                              }
+
+                              if (!context.mounted) return;
+                              
+                              // Refresh profile data in provider
+                              await Provider.of<UserProvider>(context, listen: false).loadProfile();
+
+                              if (!context.mounted) return;
+
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(builder: (context) => const HomeScreen()),
+                                (route) => false,
+                              );
+                            } else {
+                              throw 'Token not found in response';
+                            }
+                          } else {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(responseData['message'] ?? 'Login failed. Please check your credentials.'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Login failed. Please check your credentials.'),
+                            SnackBar(
+                              content: Text('Error: $e'),
                               backgroundColor: Colors.red,
                             ),
                           );

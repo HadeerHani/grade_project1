@@ -6,6 +6,11 @@ import 'package:second_project/screens/user_provider.dart';
 import 'package:second_project/screens/login_screen.dart';
 import 'package:second_project/screens/send_code_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:second_project/core/api_constants.dart';
+import 'package:second_project/core/auth_service.dart';
+import 'package:http_parser/http_parser.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
@@ -30,6 +35,65 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   // 1. تعريف متغير لحفظ الصورة والـ ImagePicker
   XFile? _profileImage;
   final ImagePicker _picker = ImagePicker();
+
+  List<dynamic> _categories = [];
+  String? _selectedCategory;
+  bool _isLoadingCategories = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCategories();
+  }
+
+  Future<void> _fetchCategories() async {
+    print("====== CATEGORY FETCH START ======");
+    print("URL: http://192.168.1.2:3000/api/categories");
+    try {
+      final response = await http.get(
+        Uri.parse('http://192.168.1.2:3000/api/categories'),
+      );
+      print("Status Code: ${response.statusCode}");
+      print("Body: ${response.body}");
+      print("====== CATEGORY FETCH END ======");
+
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+        List<dynamic> fetchedCategories = [];
+
+        if (decodedData is List) {
+          fetchedCategories = decodedData;
+          print("Parsed as List: ${fetchedCategories.length} items");
+        } else if (decodedData is Map<String, dynamic>) {
+          if (decodedData.containsKey('data') &&
+              decodedData['data'] != null &&
+              decodedData['data'] is Map &&
+              decodedData['data']['categories'] != null) {
+            fetchedCategories = decodedData['data']['categories'];
+            print(
+              "Parsed from data.categories: ${fetchedCategories.length} items",
+            );
+          } else if (decodedData.containsKey('categories')) {
+            fetchedCategories = decodedData['categories'];
+            print("Parsed from categories: ${fetchedCategories.length} items");
+          } else {
+            print("ERROR: Unknown JSON structure: $decodedData");
+          }
+        }
+
+        setState(() {
+          _categories = fetchedCategories;
+          _isLoadingCategories = false;
+        });
+      } else {
+        print("FETCH FAILED: Status ${response.statusCode}");
+        setState(() => _isLoadingCategories = false);
+      }
+    } catch (e) {
+      print("====== CATEGORY FETCH ERROR: $e ======");
+      setState(() => _isLoadingCategories = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -260,6 +324,41 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       hintText: 'e.g., Plumber with 10 years experience',
                     ),
                   ),
+
+                  const SizedBox(height: 20),
+                  if (_isLoadingCategories)
+                    const CircularProgressIndicator()
+                  else if (_categories.isNotEmpty)
+                    DropdownButtonFormField<String>(
+                      icon: const Icon(
+                        Icons.arrow_drop_down,
+                        color: Colors.black54,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Select Category',
+                        prefixIcon: Icon(Icons.category_outlined),
+                      ),
+                      initialValue: _selectedCategory,
+                      items: _categories.map<DropdownMenuItem<String>>((dynamic category) {
+                        final String categoryId = category['_id']?.toString() ?? '';
+                        final String categoryName = category['name']?.toString() ?? 'Unknown';
+                        return DropdownMenuItem<String>(
+                          value: categoryId.isNotEmpty ? categoryId : null,
+                          child: Text(categoryName),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedCategory = newValue;
+                        });
+                      },
+                      validator: (value) =>
+                          value == null ? 'Please select a category' : null,
+                    )
+                  else
+                    const Text(
+                      'No categories available, please try again later.',
+                    ),
                 ],
 
                 const SizedBox(height: 25),
@@ -273,39 +372,86 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       return;
                     }
                     if (_formKey.currentState!.validate()) {
-                      final provider = Provider.of<UserProvider>(context, listen: false);
-                      
+                      final provider = Provider.of<UserProvider>(
+                        context,
+                        listen: false,
+                      );
+
                       // Split name into first and last for the backend
-                      List<String> nameParts = fullNameController.text.trim().split(' ');
-                      String firstName = nameParts.isNotEmpty ? nameParts[0] : '';
-                      String lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : 'User';
+                      List<String> nameParts = fullNameController.text
+                          .trim()
+                          .split(' ');
+                      String firstName = nameParts.isNotEmpty
+                          ? nameParts[0]
+                          : '';
+                      String lastName = nameParts.length > 1
+                          ? nameParts.sublist(1).join(' ')
+                          : 'User';
 
                       // Prepare data according to backend registerSchema
                       Map<String, dynamic> userData = {
-                        'name': {
-                          'first': firstName,
-                          'last': lastName,
-                        },
-                        'userName': '${firstName.toLowerCase()}_${DateTime.now().millisecondsSinceEpoch % 10000}',
+                        'name': {'first': firstName, 'last': lastName},
+                        'userName':
+                            '${firstName.toLowerCase()}_${DateTime.now().millisecondsSinceEpoch % 10000}',
                         'email': emailController.text.trim(),
                         'phoneNumber': phoneController.text.trim(),
                         'password': passwordController.text,
                         'confirmPassword': confirmPasswordController.text,
-                        'dateOfBirth': '01-01-2000', // Placeholder - backend requires DD-MM-YYYY
+                        'dateOfBirth':
+                            '01-01-2000', // Placeholder - backend requires DD-MM-YYYY
                         'gender': false, // Placeholder - false for male
                         'role': _selectedRole == 'Worker' ? 'worker' : 'user',
                         'ssn': ssnController.text.trim(),
                       };
 
                       if (_selectedRole == 'Worker') {
-                        // Optional bio or category can be added here if needed
+                        userData['categoryId'] = _selectedCategory;
+                        if (bioController.text.isNotEmpty) {
+                          userData['bio'] = bioController.text.trim();
+                        }
                       }
-                      
+
                       bool success = await provider.register(userData);
-                      
+
                       if (!context.mounted) return;
-                      
+
                       if (success) {
+                        // Upload Profile Image for Worker if selected
+                        if (_selectedRole == 'Worker' &&
+                            _profileImage != null) {
+                          try {
+                            final String? token = await AuthService.getToken();
+                            var request = http.MultipartRequest(
+                              'POST',
+                              Uri.parse(ApiConstants.uploadProfileImage),
+                            );
+                            if (token != null) {
+                              request.headers['Authorization'] =
+                                  'bearer $token';
+                            }
+                            request.files.add(
+                              await http.MultipartFile.fromPath(
+                                'file',
+                                _profileImage!.path,
+                                contentType: MediaType('image', 'jpeg'),
+                                filename: 'profile_photo.jpg',
+                              ),
+                            );
+                            var streamedResponse = await request.send();
+                            var response = await http.Response.fromStream(
+                              streamedResponse,
+                            );
+                            if (response.statusCode != 200) {
+                              debugPrint(
+                                "Profile image upload failed: ${response.body}",
+                              );
+                            }
+                          } catch (e) {
+                            debugPrint("Error uploading profile image: $e");
+                          }
+                        }
+
+                        if (!context.mounted) return;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -318,7 +464,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Registration failed. Please check your data or try again.'),
+                            content: Text(
+                              'Registration failed. Please check your data or try again.',
+                            ),
                             backgroundColor: Colors.red,
                           ),
                         );

@@ -1,10 +1,10 @@
 class ApiConstants {
   // 1. If you are using the Android Emulator
-  static const String emulatorBaseUrl = 'http://10.0.2.2:3000/api';
+  static const String emulatorBaseUrl = 'http://192.168.1.2:3000/api';
 
   // 2. If you are using a Physical Device (e.g., your phone)
-  // Use your computer's local IP: 192.168.1.3
-  static const String physicalDeviceBaseUrl = 'http://192.168.1.3:3000/api';
+  // Use your computer's local IP: 192.168.1.2
+  static const String physicalDeviceBaseUrl = 'http://192.168.1.2:3000/api';
 
   // ==========================================
   // Change this to emulatorBaseUrl if using emulator,
@@ -14,6 +14,7 @@ class ApiConstants {
 
   // --- User Module Endpoints ---
   static const String userBaseUrl = '$baseUrl/user';
+  static const String categories = '$baseUrl/categories';
 
   static const String register = '$userBaseUrl/register';
   static const String login = '$userBaseUrl/login';

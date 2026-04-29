@@ -1,13 +1,16 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:second_project/screens/main_aej_screen.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
 import 'package:second_project/core/api_constants.dart';
+import 'package:second_project/core/auth_service.dart';
 
 class WorkerVerificationScreen extends StatefulWidget {
   final List<String> selectedSkills;
-  const WorkerVerificationScreen({super.key,required this.selectedSkills});
+  const WorkerVerificationScreen({super.key, required this.selectedSkills});
 
   @override
   State<WorkerVerificationScreen> createState() =>
@@ -21,10 +24,62 @@ class _WorkerVerificationScreenState extends State<WorkerVerificationScreen> {
 
   XFile? _idFile;
   XFile? _selfieFile;
+  List<dynamic> _categories = [];
+  String? _selectedCategoryId;
+  final TextEditingController _bioController = TextEditingController();
+  final TextEditingController _ssnController = TextEditingController();
+  bool _isFetchingCategories = false;
 
   final ImagePicker _picker = ImagePicker();
 
   final String uploadUrl = ApiConstants.verifyIdentity;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCategories();
+  }
+
+  @override
+  void dispose() {
+    _bioController.dispose();
+    _ssnController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchCategories() async {
+    setState(() => _isFetchingCategories = true);
+    try {
+      final response = await http.get(Uri.parse(ApiConstants.categories));
+      if (response.statusCode == 200) {
+        final decodedData = jsonDecode(response.body);
+        List<dynamic> fetchedCategories = [];
+
+        if (decodedData is List) {
+          fetchedCategories = decodedData;
+        } else if (decodedData is Map<String, dynamic>) {
+          if (decodedData.containsKey('data') && decodedData['data']['categories'] != null) {
+            fetchedCategories = decodedData['data']['categories'];
+          } else if (decodedData.containsKey('categories')) {
+            fetchedCategories = decodedData['categories'];
+          } else {
+            debugPrint('Error: Unknown JSON Map structure: $decodedData');
+          }
+        }
+
+        setState(() {
+          _categories = fetchedCategories;
+        });
+      } else {
+        debugPrint('Failed to fetch categories. Status Code: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error fetching categories: $e');
+    } finally {
+      setState(() => _isFetchingCategories = false);
+    }
+  }
+
   void _uploadId() async {
     try {
       final XFile? file = await _picker.pickImage(
@@ -47,8 +102,7 @@ class _WorkerVerificationScreenState extends State<WorkerVerificationScreen> {
     try {
       final XFile? photo = await _picker.pickImage(
         source: ImageSource.camera,
-        preferredCameraDevice:
-            CameraDevice.front,
+        preferredCameraDevice: CameraDevice.front,
         imageQuality: 50,
       );
       if (photo != null) {
@@ -64,44 +118,89 @@ class _WorkerVerificationScreenState extends State<WorkerVerificationScreen> {
   }
 
   void _submitVerification() async {
-    if (_idFile == null || _selfieFile == null) return;
+    if (_idFile == null || _selfieFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload both images')),
+      );
+      return;
+    }
+    if (_selectedCategoryId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a category')));
+      return;
+    }
+    if (_ssnController.text.length != 14) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('SSN must be 14 digits')));
+      return;
+    }
 
     setState(() => isLoading = true);
 
     try {
+      final String? token = await AuthService.getToken();
+
       var request = http.MultipartRequest('POST', Uri.parse(uploadUrl));
 
-     
-      
+      if (token != null) {
+        request.headers['Authorization'] = 'bearer $token';
+      }
+
+      request.fields['categoryId'] = _selectedCategoryId!;
+      request.fields['bio'] = _bioController.text;
+      request.fields['ssn'] = _ssnController.text;
+
       request.files.add(
-        await http.MultipartFile.fromPath('id_image', _idFile!.path),
+        await http.MultipartFile.fromPath(
+          'id_image',
+          _idFile!.path,
+          contentType: MediaType('image', 'jpeg'),
+          filename: 'id_image.jpg',
+        ),
       );
 
       request.files.add(
-        await http.MultipartFile.fromPath('live_image', _selfieFile!.path),
+        await http.MultipartFile.fromPath(
+          'live_image',
+          _selfieFile!.path,
+          contentType: MediaType('image', 'jpeg'),
+          filename: 'live_image.jpg',
+        ),
       );
 
-      var response = await request.send();
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) =>  MainScreen(selectedSkills: widget.selectedSkills)),
-        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Verification sent successfully!'),
             backgroundColor: Colors.green,
           ),
         );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                MainScreen(selectedSkills: widget.selectedSkills),
+          ),
+        );
       } else {
         if (!mounted) return;
+        String errorMessage = 'Upload failed: ${response.statusCode}';
+        try {
+          final responseData = jsonDecode(response.body);
+          if (responseData['message'] != null) {
+            errorMessage = responseData['message'];
+          }
+        } catch (_) {}
+
+        debugPrint("Upload failed body: ${response.body}");
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Upload failed: ${response.statusCode}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
@@ -214,6 +313,91 @@ class _WorkerVerificationScreenState extends State<WorkerVerificationScreen> {
                 color: AppColors.primaryDarkGreen,
               ),
             ),
+            const SizedBox(height: 30),
+
+            // --- SSN Field ---
+            Text(
+              'Social Security Number (14 digits)',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryDarkGreen,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _ssnController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: 'Enter your 14-digit SSN',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // --- Bio Field ---
+            Text(
+              'Professional Bio',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryDarkGreen,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _bioController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Briefly describe your experience...',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // --- Category Dropdown ---
+            Text(
+              'Work Category',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryDarkGreen,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _isFetchingCategories
+                ? const Center(child: CircularProgressIndicator())
+                : DropdownButtonFormField<String>(
+                    value: _selectedCategoryId,
+                    icon: const Icon(Icons.arrow_drop_down, color: Colors.black54),
+                    items: _categories.map<DropdownMenuItem<String>>((dynamic cat) {
+                      final String catId = cat['_id']?.toString() ?? '';
+                      final String catName = cat['name']?.toString() ?? 'Unknown';
+                      return DropdownMenuItem<String>(
+                        value: catId.isNotEmpty ? catId : null,
+                        child: Text(catName),
+                      );
+                    }).toList(),
+                    onChanged: (val) =>
+                        setState(() => _selectedCategoryId = val),
+                    decoration: InputDecoration(
+                      hintText: 'Select your specialty',
+                      prefixIcon: const Icon(Icons.category_outlined),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
             const SizedBox(height: 30),
             _buildVerificationTile(
               stepNumber: 1,
