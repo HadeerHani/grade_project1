@@ -2,6 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:second_project/screens/welcome_screen_modified.dart';
+import 'package:second_project/core/api_constants.dart';
+import 'package:second_project/core/auth_service.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:second_project/screens/home_screen.dart';
 
 class JobDetailsScreen extends StatefulWidget {
   final String serviceName;
@@ -22,6 +27,8 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
   final TextEditingController _locationController = TextEditingController();
 
   File? _selectedImage; // متغير لحفظ الصورة المختارة
+  bool _isLoading = false;
+  String? _categoryId; // To store the real ID from backend
 
   // ميثود اختيار الصورة من الجاليري
   Future<void> _pickImage() async {
@@ -50,6 +57,53 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _fetchCategoryId();
+  }
+
+  Future<void> _fetchCategoryId() async {
+    try {
+      final response = await http.get(Uri.parse(ApiConstants.categories));
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+        List<dynamic> fetchedCategories = [];
+
+        if (decodedData is List) {
+          fetchedCategories = decodedData;
+        } else if (decodedData is Map<String, dynamic>) {
+          if (decodedData.containsKey('data') &&
+              decodedData['data'] is Map &&
+              decodedData['data']['categories'] != null) {
+            fetchedCategories = decodedData['data']['categories'];
+          } else if (decodedData.containsKey('categories')) {
+            fetchedCategories = decodedData['categories'];
+          }
+        }
+
+        // Try to find the category ID that matches serviceName
+        for (var cat in fetchedCategories) {
+          if (cat['name'].toString().toLowerCase() ==
+              widget.serviceName.toLowerCase()) {
+            setState(() {
+              _categoryId = cat['_id'].toString();
+            });
+            break;
+          }
+        }
+        
+        // If not found, use the first one as a fallback or keep it null
+        if (_categoryId == null && fetchedCategories.isNotEmpty) {
+          // For testing, just take the first one if name doesn't match
+           // _categoryId = fetchedCategories[0]['_id'].toString();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching category ID: $e');
+    }
+  }
+
+  @override
   void dispose() {
     _dateController.dispose();
     _timeController.dispose();
@@ -57,6 +111,70 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     _descController.dispose();
     _locationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submitJob() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final token = await AuthService.getToken();
+      if (token == null) {
+        throw 'Authentication token not found. Please log in again.';
+      }
+
+      final url = Uri.parse(ApiConstants.tasks);
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'bearer $token',
+      };
+
+      final body = jsonEncode({
+        'title': "${widget.serviceName} Service Request",
+        'date': _dateController.text,
+        'time': _timeController.text,
+        'budget': int.tryParse(_budgetController.text) ?? 0,
+        'description': _descController.text,
+        'location': _locationController.text,
+        'categoryId': _categoryId ?? "656f636b65745f6964313233",
+      });
+
+      debugPrint('Submitting Task: $body');
+
+      final response = await http.post(url, headers: headers, body: body);
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Task posted successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+      } else {
+        debugPrint('POST TASK FAILED: ${response.statusCode}');
+        debugPrint('RESPONSE BODY: ${response.body}');
+        throw responseData['message'] ?? 'Failed to post task';
+      }
+    } catch (e) {
+      debugPrint('SUBMIT ERROR: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -168,16 +286,11 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   minimumSize: const Size(double.infinity, 55),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                 ),
-                onPressed: () {
-                  // تفعيل الفاليديشن قبل النشر
-                  if (_formKey.currentState!.validate()) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Job request is being posted...')),
-                    );
-                    // هنا المفروض كود الـ API لحفظ البيانات
-                  }
-                },
-                child: const Text("Post Job & Find Worker", style: TextStyle(color: AppColors.secondaryLightBeige, fontSize: 16)),
+                onPressed: _isLoading ? null : _submitJob,
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: AppColors.secondaryLightBeige)
+                    : const Text("Post Job & Find Worker",
+                        style: TextStyle(color: AppColors.secondaryLightBeige, fontSize: 16)),
               ),
             ],
           ),

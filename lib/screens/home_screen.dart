@@ -5,16 +5,72 @@ import 'package:second_project/screens/welcome_screen_modified.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:second_project/core/api_constants.dart';
+import 'package:second_project/core/auth_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  // ⭐️ بيانات الـ API (تتغير تلقائياً لاحقاً) ⭐️
-  final String userName = "Jane";
-  final int activeRequestsCount = 4;
-  final String latestRequestTitle = "Unusual Request";
-  final String latestRequestStatus = "Accepted";
-  final String latestRequestPrice = "100";
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<dynamic> _activeTasks = [];
+  bool _isLoadingTasks = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchActiveRequests();
+  }
+
+  Future<void> _fetchActiveRequests() async {
+    try {
+      final token = await AuthService.getToken();
+      if (token == null) return;
+
+      final url = Uri.parse(ApiConstants.openTasks);
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final decodedData = jsonDecode(response.body);
+        // Backend returns { data: [...] } based on common patterns, 
+        // or a direct list. Handling both.
+        List<dynamic> tasks = [];
+        if (decodedData is List) {
+          tasks = decodedData;
+        } else if (decodedData is Map && decodedData.containsKey('data')) {
+          final dataField = decodedData['data'];
+          if (dataField is List) {
+            tasks = dataField;
+          } else if (dataField is Map && dataField.containsKey('tasks')) {
+            tasks = dataField['tasks'];
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _activeTasks = tasks;
+            _isLoadingTasks = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isLoadingTasks = false);
+      }
+    } catch (e) {
+      debugPrint('Error fetching tasks: $e');
+      if (mounted) setState(() => _isLoadingTasks = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +167,7 @@ class HomeScreen extends StatelessWidget {
 
             // 2️⃣ قسم Active Requests (قابل للضغط)
             Text(
-              "Active Requests ($activeRequestsCount)",
+              "Active Requests (${_activeTasks.length})",
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -119,9 +175,9 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            _buildActiveRequestsCard(
-              context,
-            ), // نمرر الـ context هنا لتفعيل التنقل
+            _isLoadingTasks
+                ? const Center(child: CircularProgressIndicator())
+                : _buildActiveRequestsCard(context),
 
             const SizedBox(height: 24),
 
@@ -206,7 +262,7 @@ class HomeScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "You have $activeRequestsCount active requests",
+                        "You have ${_activeTasks.length} active requests",
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -234,9 +290,12 @@ class HomeScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  latestRequestTitle,
+                  _activeTasks.isNotEmpty 
+                      ? (_activeTasks.first['category']?.toString() ?? "Job Request")
+                      : "No active requests",
                   style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
+                if (_activeTasks.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -247,7 +306,7 @@ class HomeScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    "$latestRequestStatus - \$$latestRequestPrice", // بيانات API متغيرة
+                    "${_activeTasks.first['status'] ?? 'Open'} - \$${_activeTasks.first['budget'] ?? '0'}",
                     style: const TextStyle(
                       color: Colors.green,
                       fontSize: 12,

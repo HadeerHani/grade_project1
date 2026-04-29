@@ -26,6 +26,8 @@ class ApiConstants {
   static const String forgotPassword = '$userBaseUrl/forgotPassword';
   static const String resetPassword = '$userBaseUrl/resetPassword';
   static const String uploadProfileImage = '$userBaseUrl/upload';
+  static const String tasks = '$baseUrl/tasks';
+  static const String openTasks = '$baseUrl/tasks/open';
 
   static String getUserProfile(String id) => '$userBaseUrl/$id';
   static String updateUserProfile(String id) => '$userBaseUrl/$id';
